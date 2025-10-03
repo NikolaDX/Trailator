@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "829323914637",
+    "project_id": "trailator",
+    "storage_bucket": "trailator.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:829323914637:android:0f6a1eae14db093f12a1c4",
+        "android_client_info": {
+          "package_name": "com.nikoladx.trailator"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxSaqz5X26lbYCnAlvQUYKBFfqxhVZUIY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
