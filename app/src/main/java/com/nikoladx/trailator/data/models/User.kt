@@ -1,9 +1,11 @@
 package com.nikoladx.trailator.data.models
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class User(
-    val id: String,
-    val email: String,
-    val name: String,
-    val lastName: String,
-    val profileImageUrl: String? = null
+    var uid: String = "",
+    var email: String = "",
+    var name: String = "",
+    var lastName: String = "",
+    var imageUri: String = ""
 )

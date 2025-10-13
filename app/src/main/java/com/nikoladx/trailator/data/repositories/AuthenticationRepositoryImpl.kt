@@ -1,0 +1,84 @@
+package com.nikoladx.trailator.data.repositories
+
+import com.nikoladx.trailator.data.models.User
+import com.nikoladx.trailator.services.firebase.FirebaseAuthService
+import com.nikoladx.trailator.services.firebase.FirebaseUserService
+
+class AuthenticationRepositoryImpl(
+    private val authService: FirebaseAuthService,
+    private val userService: FirebaseUserService
+): AuthenticationRepository {
+    override suspend fun signUp(
+        email: String,
+        password: String,
+        name: String,
+        lastName: String,
+        imageUri: String
+    ): Result<User> {
+        return try {
+            val authResult = authService.signUp(email, password).getOrThrow()
+            val firebaseUser = authResult.user
+
+            if (firebaseUser == null) {
+                return Result.failure(Exception("User object is null."))
+            }
+
+            val newUser = User(
+                uid = firebaseUser.uid,
+                email = email,
+                name = name,
+                lastName = lastName,
+                imageUri = imageUri
+            )
+
+            val saveResult = userService.addNewUser(newUser)
+
+            if (saveResult.isFailure) {
+                authService.deleteCurrentUser()
+                return Result.failure(
+                    saveResult.exceptionOrNull() ?: Exception("Failed to save user data.")
+                )
+            }
+
+            Result.success(newUser)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun signIn(
+        email: String,
+        password: String
+    ): Result<User> {
+        return try {
+            val authResult = authService.signIn(email, password).getOrThrow()
+            val firebaseUser = authResult.user
+
+            if (firebaseUser == null) {
+                return Result.failure(Exception("User object is null."))
+            }
+
+            val userResult = userService.getUserById(firebaseUser.uid)
+
+            if (userResult.isFailure) {
+                return Result.failure(
+                    userResult.exceptionOrNull() ?: Exception("Failed to fetch user data.")
+                )
+            }
+
+            val user = userResult.getOrNull()
+
+            if (user == null) {
+                return Result.failure(Exception("User data not found."))
+            }
+
+            Result.success(user)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override fun getPersistedUserUid(): String? {
+        return authService.getCurrentUserUid()
+    }
+}
