@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.nikoladx.trailator.services.cloudinary.CloudinaryConfig
 import com.nikoladx.trailator.data.repositories.AuthenticationRepositoryImpl
 import com.nikoladx.trailator.services.firebase.FirebaseAuthService
 import com.nikoladx.trailator.services.firebase.FirebaseUserService
@@ -15,6 +16,7 @@ import com.nikoladx.trailator.ui.theme.TrailatorTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        CloudinaryConfig.initialize(this)
         enableEdgeToEdge()
         val authService = FirebaseAuthService()
         val userService = FirebaseUserService()
