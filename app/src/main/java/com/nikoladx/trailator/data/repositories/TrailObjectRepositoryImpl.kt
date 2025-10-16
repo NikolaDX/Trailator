@@ -16,6 +16,10 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
 import java.util.Date
 import java.util.UUID
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 class TrailObjectRepositoryImpl(
     private val context: Context
@@ -97,6 +101,20 @@ class TrailObjectRepositoryImpl(
             val snapshot = query.get().await()
             var objects = snapshot.documents.mapNotNull { it.toObject(TrailObject::class.java) }
 
+            filter.centerLocation?.let { center ->
+                filter.radiusInMeters?.let { radius ->
+                    objects = objects.filter { obj ->
+                        val distance = calculateDistance(
+                            center.latitude,
+                            center.longitude,
+                            obj.location.latitude,
+                            obj.location.longitude
+                        )
+                        distance <= radius
+                    }
+                }
+            }
+
             filter.types?.let { types ->
                 objects = objects.filter { it.type in types }
             }
@@ -124,6 +142,22 @@ class TrailObjectRepositoryImpl(
 
             emit(objects)
         }
+
+    private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+        val R = 6371e3
+        val latRad1 = Math.toRadians(lat1)
+        val latRad2 = Math.toRadians(lat2)
+        val deltaLat = Math.toRadians(lat2 - lat1)
+        val deltaLon = Math.toRadians(lon2 - lon1)
+
+        val a =
+            sin(deltaLat / 2) * sin(deltaLat / 2) + cos(latRad1) * cos(latRad2) * sin(
+                deltaLon / 2
+            ) * sin(deltaLon / 2)
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+        return R * c
+    }
 
     override suspend fun addRating(
         objectId: String,
@@ -187,10 +221,12 @@ class TrailObjectRepositoryImpl(
 
                 val updatedComments = comments + comment
 
-                transaction.update(objectRef, mapOf(
-                    "comments" to updatedComments,
-                    "lastInteractionAt" to Date()
-                ))
+                transaction.update(
+                    objectRef, mapOf(
+                        "comments" to updatedComments,
+                        "lastInteractionAt" to Date()
+                    )
+                )
             }.await()
 
             awardPoints(userId, PointAction.COMMENT)
@@ -206,7 +242,7 @@ class TrailObjectRepositoryImpl(
         firestore.runTransaction { transaction ->
             val snapshot = transaction.get(userRef)
             val currentPoints = snapshot.getLong("points") ?: 0L
-            val newPoints  = currentPoints + action.points
+            val newPoints = currentPoints + action.points
 
             transaction.update(userRef, "points", newPoints)
         }.await()
@@ -223,7 +259,7 @@ class TrailObjectRepositoryImpl(
 
             val authorId = snapshot.getString("authorId")
             if (authorId != userId) {
-                return Result.failure(Exception("Unauthroized"))
+                return Result.failure(Exception("Unauthorized"))
             }
 
             objectRef.delete().await()

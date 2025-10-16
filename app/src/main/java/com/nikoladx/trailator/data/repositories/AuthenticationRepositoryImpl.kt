@@ -20,6 +20,7 @@ class AuthenticationRepositoryImpl(
             val firebaseUser = authResult.user
 
             if (firebaseUser == null) {
+                authService.deleteCurrentUser()
                 return Result.failure(Exception("User object is null."))
             }
 
@@ -42,6 +43,7 @@ class AuthenticationRepositoryImpl(
 
             Result.success(newUser)
         } catch (e: Exception) {
+            authService.deleteCurrentUser()
             Result.failure(e)
         }
     }
@@ -76,6 +78,10 @@ class AuthenticationRepositoryImpl(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    override fun signOut() {
+        authService.signOut()
     }
 
     override fun getPersistedUserUid(): String? {

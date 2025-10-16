@@ -1,22 +1,49 @@
 package com.nikoladx.trailator.ui.screens.home
 
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.nikoladx.trailator.data.models.HomeTopBarContent
 import com.nikoladx.trailator.ui.navigation.HomeNavHost
 import com.nikoladx.trailator.ui.navigation.HomeTab
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onSignOut: () -> Unit
+) {
     val navController = rememberNavController()
+
+    var topBarContent by remember {
+        mutableStateOf(HomeTopBarContent(title = HomeTab.Feed.title))
+    }
+
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
 
     val tabs = listOf(
         HomeTab.Feed,
@@ -25,7 +52,23 @@ fun HomeScreen() {
         HomeTab.Profile
     )
 
+    val currentTab = tabs.find { it.route == currentRoute } ?: HomeTab.Feed
+
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(topBarContent.title) },
+                actions = {
+                    topBarContent.actions?.invoke()
+                    IconButton(onClick = onSignOut) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ExitToApp,
+                            contentDescription = "Sign Out"
+                        )
+                    }
+                }
+            )
+        },
         bottomBar = {
             NavigationBar {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -52,7 +95,11 @@ fun HomeScreen() {
     ) { paddingValues ->
         HomeNavHost(
             navController = navController,
-            modifier = Modifier.padding(paddingValues)
+            topBarContent = topBarContent,
+            modifier = Modifier.padding(paddingValues),
+            onUpdateTopBar = { newContent ->
+                topBarContent = newContent.copy(title = newContent.title)
+            }
         )
     }
 }

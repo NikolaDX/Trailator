@@ -1,6 +1,7 @@
 package com.nikoladx.trailator.ui.screens.home.viewmodels
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Application
 import android.content.pm.PackageManager
 import android.os.Looper
@@ -19,6 +20,9 @@ import com.nikoladx.trailator.data.models.LocationState
 import com.nikoladx.trailator.data.models.TrailObject
 import com.nikoladx.trailator.data.models.TrailObjectFilter
 import com.nikoladx.trailator.data.repositories.TrailObjectRepository
+import com.nikoladx.trailator.data.repositories.UserRepositoryImpl
+import com.nikoladx.trailator.services.firebase.FirebaseAuthService
+import com.nikoladx.trailator.services.notifications.NotificationService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,12 +37,19 @@ data class MapUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val showAddObjectDialog: Boolean = false,
-    val currentFilter: TrailObjectFilter = TrailObjectFilter()
+    val currentFilter: TrailObjectFilter = TrailObjectFilter(),
+    val searchRadius: Float = 0f
 )
 
-class MapViewModel(val repository: TrailObjectRepository, application: Application) : AndroidViewModel(application) {
+class MapViewModel(
+    val repository: TrailObjectRepository,
+    application: Application
+) : AndroidViewModel(application) {
+
     private val fusedLocationClient: FusedLocationProviderClient =
         LocationServices.getFusedLocationProviderClient(application)
+
+    private val NEARBY_RADIUS_METERS = 3000.0
 
     private val _uiState = MutableStateFlow(MapUiState())
     val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
@@ -46,12 +57,20 @@ class MapViewModel(val repository: TrailObjectRepository, application: Applicati
     private val _locationState = MutableStateFlow(LocationState())
     val locationState = _locationState.asStateFlow()
 
+    private val authService = FirebaseAuthService()
+    private val userRepository = UserRepositoryImpl(application)
+
+    private val notificationService = NotificationService(application)
+
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             result.lastLocation?.let { location ->
+                val newLocation = LatLng(location.latitude, location.longitude)
                 _locationState.update {
                     it.copy(location = LatLng(location.latitude, location.longitude))
                 }
+                updateUserLocationInFirebase(newLocation.latitude, newLocation.longitude)
+                checkForNearbyObjects(newLocation)
             }
         }
     }
@@ -105,8 +124,19 @@ class MapViewModel(val repository: TrailObjectRepository, application: Applicati
         stopLocationUpdates()
     }
 
+    @Suppress("MissingPermission")
     private fun startLocationUpdates() {
         if (!_locationState.value.permissionGranted) return
+
+        val hasPermission = ContextCompat.checkSelfPermission(
+            getApplication(),
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (!hasPermission) {
+            _locationState.update { it.copy(permissionGranted = false) }
+            return
+        }
 
         try {
             fusedLocationClient.requestLocationUpdates(
@@ -116,12 +146,17 @@ class MapViewModel(val repository: TrailObjectRepository, application: Applicati
             )
         } catch (e: SecurityException) {
             _locationState.update { it.copy(permissionGranted = false) }
+            _uiState.update { it.copy(error = "Greška pri pristupanju lokaciji") }
             e.printStackTrace()
         }
     }
 
     private fun stopLocationUpdates() {
-        fusedLocationClient.removeLocationUpdates(locationCallback)
+        try {
+            fusedLocationClient.removeLocationUpdates(locationCallback)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun loadTrailObjects() {
@@ -141,9 +176,14 @@ class MapViewModel(val repository: TrailObjectRepository, application: Applicati
         }
     }
 
-
     fun applyFilter(filter: TrailObjectFilter) {
-        _uiState.update { it.copy(currentFilter = filter) }
+        val filterWithLocation = if (filter.radiusInMeters != null && filter.radiusInMeters > 0) {
+            filter.copy(centerLocation = getCurrentLocationAsGeoPoint())
+        } else {
+            filter.copy(centerLocation = null)
+        }
+
+        _uiState.update { it.copy(currentFilter = filterWithLocation) }
         loadTrailObjects()
     }
 
@@ -182,6 +222,60 @@ class MapViewModel(val repository: TrailObjectRepository, application: Applicati
     fun getCurrentLocationAsGeoPoint(): GeoPoint {
         val loc = _uiState.value.location
         return GeoPoint(loc.latitude, loc.longitude)
+    }
+
+    fun updateSearchRadius(radius: Float) {
+        val newRadius = radius.toDouble()
+        _uiState.update { it.copy(searchRadius = radius) }
+
+        val newCenterLocation = if (newRadius > 0) getCurrentLocationAsGeoPoint() else null
+        val newRadiusInMeters = if (newRadius > 0) newRadius else null
+
+        val newFilter = _uiState.value.currentFilter.copy(
+            centerLocation = newCenterLocation,
+            radiusInMeters = newRadiusInMeters
+        )
+
+        _uiState.update { it.copy(currentFilter = newFilter) }
+        loadTrailObjects()
+    }
+
+    private fun updateUserLocationInFirebase(lat: Double, lon: Double) {
+        val userId = authService.getCurrentUserUid()
+        if (userId != null) {
+            viewModelScope.launch {
+                userRepository.updateUserLocation(userId, GeoPoint(lat, lon))
+            }
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun checkForNearbyObjects(currentLocation: LatLng) {
+        val filter = TrailObjectFilter(
+            centerLocation = GeoPoint(currentLocation.latitude, currentLocation.longitude),
+            radiusInMeters = NEARBY_RADIUS_METERS
+        )
+
+        viewModelScope.launch {
+            repository.getFilteredTrailObjects(filter)
+                .collect { nearbyObjects ->
+                    if (nearbyObjects.isNotEmpty()) {
+                        notificationService.showNearbyObjectsNotification(nearbyObjects)
+                    } else {
+                        notificationService.resetNotifiedObjects()
+                    }
+
+                    return@collect
+                }
+        }
+    }
+
+    fun hasNotificationPermission(): Boolean {
+        return notificationService.hasNotificationPermission()
+    }
+
+    fun clearNotifications() {
+        notificationService.cancelAllNotifications()
     }
 
     override fun onCleared() {

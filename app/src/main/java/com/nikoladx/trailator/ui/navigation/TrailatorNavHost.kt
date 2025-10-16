@@ -39,11 +39,11 @@ fun TrailatorNavHost(
         NavHost(
             navController = navController,
             startDestination = startDestination,
-            modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Login.route) {
                 val viewModel = viewModel<LoginViewModel>(factory = loginFactory)
                 LoginScreen(
+                    modifier = Modifier.padding(innerPadding),
                     viewModel = viewModel,
                     onLoginSuccess = {
                         navController.navigate(Screen.Home.route) {
@@ -59,6 +59,7 @@ fun TrailatorNavHost(
             composable(Screen.Register.route) {
                 val viewModel = viewModel<RegisterViewModel>(factory = registerFactory)
                 RegisterScreen(
+                    modifier = Modifier.padding(innerPadding),
                     viewModel = viewModel,
                     onRegistrationSuccess = {
                         navController.navigate(Screen.Home.route) {
@@ -69,7 +70,14 @@ fun TrailatorNavHost(
             }
 
             composable(Screen.Home.route) {
-                HomeScreen()
+                HomeScreen(
+                    onSignOut = {
+                        authRepository.signOut()
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
+                        }
+                    }
+                )
             }
         }
     }

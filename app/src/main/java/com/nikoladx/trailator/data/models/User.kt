@@ -1,4 +1,5 @@
 package com.nikoladx.trailator.data.models
+import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
 
@@ -18,7 +19,8 @@ data class User(
     @ServerTimestamp
     val memberSince: Date? = null,
     @ServerTimestamp
-    val lastActive: Date? = null
+    val lastActive: Date? = null,
+    val location: GeoPoint? = null
 ) {
     fun calculateRank(): UserRank {
         return when {

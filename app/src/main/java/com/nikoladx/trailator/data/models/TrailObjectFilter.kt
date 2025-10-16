@@ -1,5 +1,6 @@
 package com.nikoladx.trailator.data.models
 
+import com.google.firebase.firestore.GeoPoint
 import java.util.Date
 
 data class TrailObjectFilter(
@@ -10,5 +11,7 @@ data class TrailObjectFilter(
     val dateFrom: Date? = null,
     val dateTo: Date? = null,
     val difficulty: TrailDifficulty? = null,
-    val searchQuery: String? = null
+    val searchQuery: String? = null,
+    val centerLocation: GeoPoint? = null,
+    val radiusInMeters: Double? = null
 )
