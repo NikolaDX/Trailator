@@ -4,22 +4,29 @@ import android.Manifest
 import android.annotation.SuppressLint
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -75,6 +82,13 @@ fun MapsScreen(
     val position = com.google.android.gms.maps.model.LatLng(
         uiState.location.latitude,
         uiState.location.longitude
+    )
+
+    var tempRadius by remember { mutableStateOf(uiState.searchRadius) }
+
+    val animatedRadius by animateFloatAsState(
+        targetValue = tempRadius,
+        animationSpec = tween(durationMillis = 500)
     )
 
     val MIN_RADIUS = 0f
@@ -149,7 +163,8 @@ fun MapsScreen(
                     Icon(Icons.Default.Add, "Add object")
                 }
             }
-        }
+        },
+        floatingActionButtonPosition = FabPosition.Start
     ) { padding ->
         Box(
             modifier = Modifier
@@ -165,10 +180,10 @@ fun MapsScreen(
                 ),
                 onMapLoaded = { mapLoaded = true }
             ) {
-                if (uiState.searchRadius > 0) {
+                if (animatedRadius > 0) {
                     Circle(
                         center = position,
-                        radius = uiState.searchRadius.toDouble(),
+                        radius = animatedRadius.toDouble(),
                         strokeWidth = 2f,
                         strokeColor = MaterialTheme.colorScheme.primary,
                         fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
@@ -212,51 +227,72 @@ fun MapsScreen(
                 }
             }
 
-            Column(
+            Card(
                 modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 80.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .align(Alignment.BottomCenter)
+                    .width(250.dp)
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 6.dp
+                ),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
             ) {
-                if (uiState.searchRadius > 0) {
-                    Text(
-                        text = "Radius: ${uiState.searchRadius.toInt()} m",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                } else {
-                    Text(
-                        text = "Radius Search Off",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                }
+                Column(
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    if (animatedRadius > 0) {
+                        Text(
+                            text = "Radius: ${animatedRadius.toInt()} m",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                    } else {
+                        Text(
+                            text = "Radius Search Off",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                    }
 
-                Slider(
-                    value = uiState.searchRadius,
-                    onValueChange = { newValue ->
-                        viewModel.updateSearchRadius(newValue)
-                    },
-                    valueRange = MIN_RADIUS..MAX_RADIUS,
-                    steps = (MAX_RADIUS / STEP_SIZE).toInt() - 1,
-                    modifier = Modifier.fillMaxWidth(0.9f)
-                )
-
-                if (showPermissionDialog) {
-                    NotificationPermissionDialog(
-                        onRequestPermission = {
-                            showPermissionDialog = false
-                            onRequestNotificationPermission()
+                    Slider(
+                        value = tempRadius,
+                        onValueChange = { newValue ->
+                            tempRadius = newValue
                         },
-                        onDismiss = {
-                            showPermissionDialog = false
+                        onValueChangeFinished = {
+                            viewModel.updateSearchRadius(tempRadius)
                         },
-                        onOpenSettings = {
-                            showPermissionDialog = false
-                            onOpenSettings()
-                        }
+                        valueRange = MIN_RADIUS..MAX_RADIUS,
+                        modifier = Modifier.fillMaxWidth(0.9f),
+                        colors = SliderDefaults.colors(
+                            thumbColor = MaterialTheme.colorScheme.primary,
+                            activeTrackColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            inactiveTrackColor = MaterialTheme.colorScheme.onSurface,
+                            activeTickColor = MaterialTheme.colorScheme.primary,
+                            inactiveTickColor = MaterialTheme.colorScheme.secondary,
+                        )
                     )
+
+                    if (showPermissionDialog) {
+                        NotificationPermissionDialog(
+                            onRequestPermission = {
+                                showPermissionDialog = false
+                                onRequestNotificationPermission()
+                            },
+                            onDismiss = {
+                                showPermissionDialog = false
+                            },
+                            onOpenSettings = {
+                                showPermissionDialog = false
+                                onOpenSettings()
+                            }
+                        )
+                    }
                 }
             }
         }
