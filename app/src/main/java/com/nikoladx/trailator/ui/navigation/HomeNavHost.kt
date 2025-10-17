@@ -31,10 +31,10 @@ import com.nikoladx.trailator.data.repositories.AuthenticationRepositoryImpl
 import com.nikoladx.trailator.services.firebase.FirebaseAuthService
 import com.nikoladx.trailator.services.firebase.FirebaseUserService
 import com.nikoladx.trailator.ui.screens.home.FeedScreen
-import com.nikoladx.trailator.ui.screens.home.MapsScreen
+import com.nikoladx.trailator.ui.screens.home.maps.MapsScreen
 import com.nikoladx.trailator.ui.screens.home.ProfileScreen
 import com.nikoladx.trailator.ui.screens.home.RankingsScreen
-import com.nikoladx.trailator.ui.screens.home.viewmodels.MapViewModelFactory
+import com.nikoladx.trailator.ui.screens.home.maps.viewmodels.MapViewModelFactory
 import com.nikoladx.trailator.ui.screens.home.viewmodels.ProfileViewModelFactory
 import com.nikoladx.trailator.ui.screens.home.viewmodels.RankingsViewModelFactory
 
@@ -88,9 +88,6 @@ fun HomeNavHost(
             MapsScreen(
                 viewModel = viewModel(factory = mapViewModelFactory),
                 userId = currentUserId,
-                onRequestLocationPermission = {
-                    locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-                },
                 onRequestNotificationPermission = {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
