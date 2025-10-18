@@ -39,7 +39,7 @@ fun HomeScreen(
     val tabs = listOf(
         HomeTab.Feed,
         HomeTab.Maps,
-        HomeTab.Rankings,
+        HomeTab.Leaderboard,
         HomeTab.Profile
     )
 
@@ -91,7 +91,6 @@ fun HomeScreen(
     ) { paddingValues ->
         HomeNavHost(
             navController = navController,
-            topBarContent = topBarContent,
             modifier = Modifier.padding(paddingValues),
             onUpdateTopBar = { newContent ->
                 topBarContent = newContent.copy(title = newContent.title)

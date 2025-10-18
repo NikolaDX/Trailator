@@ -33,7 +33,7 @@ import com.nikoladx.trailator.services.firebase.FirebaseUserService
 import com.nikoladx.trailator.ui.screens.home.FeedScreen
 import com.nikoladx.trailator.ui.screens.home.maps.MapsScreen
 import com.nikoladx.trailator.ui.screens.home.ProfileScreen
-import com.nikoladx.trailator.ui.screens.home.RankingsScreen
+import com.nikoladx.trailator.ui.screens.home.leaderboard.RankingsScreen
 import com.nikoladx.trailator.ui.screens.home.maps.viewmodels.MapViewModelFactory
 import com.nikoladx.trailator.ui.screens.home.viewmodels.ProfileViewModelFactory
 import com.nikoladx.trailator.ui.screens.home.viewmodels.RankingsViewModelFactory
@@ -48,21 +48,12 @@ private val authRepository = AuthenticationRepositoryImpl(authService, userServi
 fun HomeNavHost(
     navController: NavHostController,
     modifier: Modifier,
-    topBarContent: HomeTopBarContent,
     onUpdateTopBar: (HomeTopBarContent) -> Unit
 ) {
     val application = LocalContext.current.applicationContext as Application
     val currentUserId = authRepository.getPersistedUserUid() ?: "guest_user_id"
     var onEditAction: (() -> Unit)? by remember { mutableStateOf(null) }
     val context = LocalContext.current
-
-    val locationPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (!isGranted) {
-            Toast.makeText(context, "Location permission denied", Toast.LENGTH_SHORT).show()
-        }
-    }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -104,8 +95,8 @@ fun HomeNavHost(
             )
         }
 
-        composable(HomeTab.Rankings.route) {
-            onUpdateTopBar(HomeTopBarContent(title = HomeTab.Rankings.title))
+        composable(HomeTab.Leaderboard.route) {
+            onUpdateTopBar(HomeTopBarContent(title = HomeTab.Leaderboard.title))
             val rankingsViewModelFactory = RankingsViewModelFactory(application)
             RankingsScreen(viewModel(factory = rankingsViewModelFactory))
         }

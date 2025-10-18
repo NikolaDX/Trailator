@@ -10,6 +10,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 sealed class HomeTab(val route: String, val title: String, val icon: ImageVector) {
     object Feed : HomeTab("feed", "Home", Icons.Filled.Home)
     object Maps : HomeTab("maps", "Maps", Icons.Filled.Map)
-    object Rankings : HomeTab("rankings", "Rankings", Icons.Filled.Leaderboard)
+    object Leaderboard : HomeTab("leaderboard", "Leaderboard", Icons.Filled.Leaderboard)
     object Profile: HomeTab("profile", "Profile", Icons.Filled.Person)
 }
