@@ -23,11 +23,13 @@ import com.nikoladx.trailator.data.repositories.TrailObjectRepository
 import com.nikoladx.trailator.data.repositories.UserRepositoryImpl
 import com.nikoladx.trailator.services.firebase.FirebaseAuthService
 import com.nikoladx.trailator.services.notifications.NotificationService
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 data class MapUiState(
     val permissionGranted: Boolean = false,
@@ -38,8 +40,11 @@ data class MapUiState(
     val error: String? = null,
     val showAddObjectDialog: Boolean = false,
     val currentFilter: TrailObjectFilter = TrailObjectFilter(),
-    val searchRadius: Float = 0f
+    val searchRadius: Float = 0f,
+    val currentUserName: String = ""
 )
+
+private const val NEARBY_RADIUS_METERS = 3000.0
 
 class MapViewModel(
     val repository: TrailObjectRepository,
@@ -49,13 +54,11 @@ class MapViewModel(
     private val fusedLocationClient: FusedLocationProviderClient =
         LocationServices.getFusedLocationProviderClient(application)
 
-    private val NEARBY_RADIUS_METERS = 3000.0
 
     private val _uiState = MutableStateFlow(MapUiState())
     val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
 
     private val _locationState = MutableStateFlow(LocationState())
-    val locationState = _locationState.asStateFlow()
 
     private val authService = FirebaseAuthService()
     private val userRepository = UserRepositoryImpl(application)
@@ -77,7 +80,7 @@ class MapViewModel(
 
     private val locationRequest = LocationRequest.Builder(
         Priority.PRIORITY_HIGH_ACCURACY,
-        5000L
+        2000L
     ).apply {
         setMinUpdateIntervalMillis(2000L)
         setWaitForAccurateLocation(true)
@@ -86,6 +89,7 @@ class MapViewModel(
     init {
         checkAndStartLocationUpdates()
         loadTrailObjects()
+        fetchCurrentUserName()
 
         viewModelScope.launch {
             _locationState.collect { locationState ->
@@ -94,6 +98,26 @@ class MapViewModel(
                         location = locationState.location,
                         permissionGranted = locationState.permissionGranted
                     )
+                }
+            }
+        }
+    }
+
+    private fun fetchCurrentUserName() {
+        val userId = authService.getCurrentUserUid()
+        if (userId != null) {
+            viewModelScope.launch {
+                try {
+                    val userDoc = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                        .collection("users")
+                        .document(userId)
+                        .get()
+                        .await()
+
+                    val userName = userDoc.getString("name") ?: "Anonymous"
+                    _uiState.update { it.copy(currentUserName = userName) }
+                } catch (_: Exception) {
+                    _uiState.update { it.copy(currentUserName = "Anonymous") }
                 }
             }
         }
@@ -165,9 +189,17 @@ class MapViewModel(
 
             repository.getFilteredTrailObjects(_uiState.value.currentFilter)
                 .collect { objects ->
+                    val currentSelectedId = _uiState.value.selectedObject?.id
+                    val updatedSelectedObject = if (currentSelectedId != null) {
+                        objects.find { it.id == currentSelectedId }
+                    } else {
+                        null
+                    }
+
                     _uiState.update {
                         it.copy(
                             trailObjects = objects,
+                            selectedObject = updatedSelectedObject,
                             isLoading = false,
                             error = null
                         )
@@ -224,6 +256,10 @@ class MapViewModel(
         return GeoPoint(loc.latitude, loc.longitude)
     }
 
+    fun getUserImageUriFlow(userId: String): Flow<String?> {
+        return userRepository.getUserImageUriFlow(userId)
+    }
+
     fun updateSearchRadius(radius: Float) {
         val newRadius = radius.toDouble()
         _uiState.update { it.copy(searchRadius = radius) }
@@ -272,10 +308,6 @@ class MapViewModel(
 
     fun hasNotificationPermission(): Boolean {
         return notificationService.hasNotificationPermission()
-    }
-
-    fun clearNotifications() {
-        notificationService.cancelAllNotifications()
     }
 
     override fun onCleared() {

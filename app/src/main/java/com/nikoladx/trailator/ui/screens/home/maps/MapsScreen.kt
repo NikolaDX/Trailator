@@ -46,7 +46,7 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.nikoladx.trailator.ui.screens.home.maps.components.AddObjectDialog
 import com.nikoladx.trailator.ui.screens.home.maps.components.FilterDialog
-import com.nikoladx.trailator.ui.objects.ObjectDetailsBottomSheet
+import com.nikoladx.trailator.ui.screens.home.maps.components.ObjectDetailsBottomSheet
 import com.nikoladx.trailator.ui.screens.home.maps.viewmodels.MapViewModel
 import androidx.compose.ui.platform.LocalContext
 import com.google.android.gms.maps.model.BitmapDescriptor
@@ -302,11 +302,13 @@ fun MapsScreen(
         ObjectDetailsBottomSheet(
             trailObject = obj,
             userId = userId,
+            userName = uiState.currentUserName,
             onDismiss = { viewModel.selectObject(null) },
             onRate = { rating -> viewModel.addRating(obj.id, userId, rating) },
-            onComment = { text, userName ->
-                viewModel.addComment(obj.id, userId, userName, text)
-            }
+            onComment = { text ->
+                viewModel.addComment(obj.id, userId, uiState.currentUserName, text)
+            },
+            viewModel = viewModel
         )
     }
 }

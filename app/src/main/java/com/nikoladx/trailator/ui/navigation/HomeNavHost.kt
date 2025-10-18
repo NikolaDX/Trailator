@@ -100,7 +100,7 @@ fun HomeNavHost(
                         data = Uri.fromParts("package", context.packageName, null)
                     }
                     context.startActivity(intent)
-                }
+                },
             )
         }
 

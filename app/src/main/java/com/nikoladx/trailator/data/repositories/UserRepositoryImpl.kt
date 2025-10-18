@@ -4,10 +4,12 @@ import android.content.Context
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.snapshots
 import com.nikoladx.trailator.data.models.User
 import com.nikoladx.trailator.services.cloudinary.CloudinaryUploader
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 
 class UserRepositoryImpl(
@@ -89,4 +91,12 @@ class UserRepositoryImpl(
         }
     }
 
+    override fun getUserImageUriFlow(userId: String): Flow<String?> =
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(userId)
+            .snapshots()
+            .map { snapshot ->
+                snapshot.getString("imageUri")
+            }
 }

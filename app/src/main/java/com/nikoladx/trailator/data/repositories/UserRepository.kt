@@ -9,4 +9,5 @@ interface UserRepository {
     suspend fun getUser(userId: String): Result<User>
     suspend fun updateUserProfile(userId: String, name: String, lastName: String, imageUri: String?) : Result<Unit>
     suspend fun updateUserLocation(userId: String, location: GeoPoint): Result<Unit>
+    fun getUserImageUriFlow(userId: String): Flow<String?>
 }

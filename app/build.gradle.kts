@@ -117,4 +117,7 @@ dependencies {
 
     // Jetpack compose
     implementation("io.coil-kt:coil-compose:2.7.0")
+
+    // Google fonts
+    implementation("androidx.compose.ui:ui-text-google-fonts:1.9.3")
 }

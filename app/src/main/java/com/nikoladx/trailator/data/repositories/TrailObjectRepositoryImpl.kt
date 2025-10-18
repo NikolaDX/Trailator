@@ -1,6 +1,7 @@
 package com.nikoladx.trailator.data.repositories
 
 import android.content.Context
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.Query
@@ -200,7 +201,8 @@ class TrailObjectRepositoryImpl(
                 id = UUID.randomUUID().toString(),
                 userId = userId,
                 userName = userName,
-                text = text
+                text = text,
+                timestamp = Date()
             )
 
             val objectRef = objectsCollection.document(objectId)
@@ -215,7 +217,7 @@ class TrailObjectRepositoryImpl(
                                 userId = map["userId"] as? String ?: "",
                                 userName = map["userName"] as? String ?: "",
                                 text = map["text"] as? String ?: "",
-                                timestamp = map["timestamp"] as? Date
+                                timestamp = (map["timestamp"] as? Timestamp)?.toDate()
                             )
                         } ?: emptyList()
 
