@@ -50,10 +50,8 @@ class MapViewModel(
     val repository: TrailObjectRepository,
     application: Application
 ) : AndroidViewModel(application) {
-
     private val fusedLocationClient: FusedLocationProviderClient =
         LocationServices.getFusedLocationProviderClient(application)
-
 
     private val _uiState = MutableStateFlow(MapUiState())
     val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
@@ -208,6 +206,29 @@ class MapViewModel(
         }
     }
 
+    fun deleteTrailObject(objectId: String, userId: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+
+            repository.deleteTrailObject(objectId, userId).onSuccess {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        selectedObject = null
+                    )
+                }
+                loadTrailObjects()
+            }.onFailure { exception ->
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = "Failed to delete object: ${exception.message}"
+                    )
+                }
+            }
+        }
+    }
+
     fun applyFilter(filter: TrailObjectFilter) {
         val filterWithLocation = if (filter.radiusInMeters != null && filter.radiusInMeters > 0) {
             filter.copy(centerLocation = getCurrentLocationAsGeoPoint())
@@ -241,9 +262,9 @@ class MapViewModel(
         }
     }
 
-    fun addComment(objectId: String, userId: String, userName: String, text: String) {
+    fun addComment(objectId: String, userId: String, text: String) {
         viewModelScope.launch {
-            repository.addComment(objectId, userId, userName, text).onSuccess {
+            repository.addComment(objectId, userId, text).onSuccess {
                 loadTrailObjects()
             }.onFailure { e ->
                 _uiState.update { it.copy(error = e.message) }
@@ -258,6 +279,10 @@ class MapViewModel(
 
     fun getUserImageUriFlow(userId: String): Flow<String?> {
         return userRepository.getUserImageUriFlow(userId)
+    }
+
+    fun getUserName(userId: String): Flow<String?> {
+        return userRepository.getUserName(userId)
     }
 
     fun updateSearchRadius(radius: Float) {

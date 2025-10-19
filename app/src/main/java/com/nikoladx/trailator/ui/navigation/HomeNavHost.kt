@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -24,35 +25,35 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.nikoladx.trailator.data.models.HomeTopBarContent
 import com.nikoladx.trailator.data.repositories.AuthenticationRepositoryImpl
 import com.nikoladx.trailator.services.firebase.FirebaseAuthService
 import com.nikoladx.trailator.services.firebase.FirebaseUserService
 import com.nikoladx.trailator.ui.screens.home.FeedScreen
 import com.nikoladx.trailator.ui.screens.home.maps.MapsScreen
-import com.nikoladx.trailator.ui.screens.home.ProfileScreen
+import com.nikoladx.trailator.ui.screens.home.profile.ProfileScreen
 import com.nikoladx.trailator.ui.screens.home.leaderboard.RankingsScreen
 import com.nikoladx.trailator.ui.screens.home.maps.viewmodels.MapViewModelFactory
-import com.nikoladx.trailator.ui.screens.home.viewmodels.ProfileViewModelFactory
-import com.nikoladx.trailator.ui.screens.home.viewmodels.RankingsViewModelFactory
+import com.nikoladx.trailator.ui.screens.home.profile.viewmodels.ProfileViewModelFactory
+import com.nikoladx.trailator.ui.screens.home.leaderboard.viewmodels.RankingsViewModelFactory
 
 private val authService = FirebaseAuthService()
 private val userService = FirebaseUserService()
 private val authRepository = AuthenticationRepositoryImpl(authService, userService)
 
-
-
 @Composable
 fun HomeNavHost(
     navController: NavHostController,
     modifier: Modifier,
-    onUpdateTopBar: (HomeTopBarContent) -> Unit
+    onUpdateTopBar: (HomeTopBarContent) -> Unit,
+    onAccountDeleted: () -> Unit
 ) {
     val application = LocalContext.current.applicationContext as Application
     val currentUserId = authRepository.getPersistedUserUid() ?: "guest_user_id"
-    var onEditAction: (() -> Unit)? by remember { mutableStateOf(null) }
     val context = LocalContext.current
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
@@ -68,11 +69,13 @@ fun HomeNavHost(
         startDestination = HomeTab.Feed.route,
         modifier = modifier
     ) {
+        // Feed Tab
         composable(HomeTab.Feed.route) {
             onUpdateTopBar(HomeTopBarContent(title = HomeTab.Feed.title))
             FeedScreen()
         }
 
+        // Maps Tab
         composable(HomeTab.Maps.route) {
             onUpdateTopBar(HomeTopBarContent(title = HomeTab.Maps.title))
             val mapViewModelFactory = MapViewModelFactory(application)
@@ -82,8 +85,6 @@ fun HomeNavHost(
                 onRequestNotificationPermission = {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                    } else {
-                        // Za starije verzije ne treba
                     }
                 },
                 onOpenSettings = {
@@ -92,19 +93,22 @@ fun HomeNavHost(
                     }
                     context.startActivity(intent)
                 },
+                onNavigateToProfile = { userId ->
+                    navController.navigate(Routes.viewProfile(userId))
+                }
             )
         }
 
+        // Leaderboard Tab
         composable(HomeTab.Leaderboard.route) {
             onUpdateTopBar(HomeTopBarContent(title = HomeTab.Leaderboard.title))
             val rankingsViewModelFactory = RankingsViewModelFactory(application)
             RankingsScreen(viewModel(factory = rankingsViewModelFactory))
         }
 
+        // Profile Tab
         composable(HomeTab.Profile.route) {
-            val profileViewModelFactory = ProfileViewModelFactory(application)
-            val currentUserId = FirebaseAuthService().getCurrentUserUid()
-
+            val profileViewModelFactory = ProfileViewModelFactory(application, currentUserId)
             var profileActions by remember { mutableStateOf<(@Composable () -> Unit)?>(null) }
 
             onUpdateTopBar(
@@ -116,19 +120,78 @@ fun HomeNavHost(
 
             ProfileScreen(
                 viewModel = viewModel(factory = profileViewModelFactory),
-                currentUserId = currentUserId ?: "",
-                onSetTopBarActions = { isEditing, onSave ->
+                loggedInUserId = currentUserId,
+                targetUserId = currentUserId,
+                onSetTopBarActions = { isEditing, onSave, onEdit, canEdit ->
                     profileActions = {
-                        if (isEditing) {
-                            TextButton(onClick = onSave) { Text("Save") }
-                        } else {
-                            IconButton(onClick = { onEditAction?.invoke() }) {
-                                Icon(Icons.Default.Edit, contentDescription = "Edit")
+                        when {
+                            isEditing -> {
+                                TextButton(onClick = onSave) {
+                                    Text("Save")
+                                }
+                            }
+                            canEdit -> {
+                                IconButton(onClick = onEdit) {
+                                    Icon(Icons.Default.Edit, contentDescription = "Edit")
+                                }
                             }
                         }
                     }
                 },
-                setOnEditAction = { onEditAction = it }
+                onAccountDeleted = onAccountDeleted
+            )
+        }
+
+
+        composable(
+            route = Routes.VIEW_PROFILE,
+            arguments = listOf(
+                navArgument(Routes.VIEW_PROFILE_ARG) {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val targetUserId = backStackEntry.arguments?.getString(Routes.VIEW_PROFILE_ARG)
+                ?: currentUserId
+
+            val profileViewModelFactory = ProfileViewModelFactory(application, targetUserId)
+            var profileActions by remember { mutableStateOf<(@Composable () -> Unit)?>(null) }
+
+            onUpdateTopBar(
+                HomeTopBarContent(
+                    title = "User Profile",
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    },
+                    actions = profileActions
+                )
+            )
+
+            ProfileScreen(
+                viewModel = viewModel(factory = profileViewModelFactory),
+                loggedInUserId = currentUserId,
+                targetUserId = targetUserId,
+                onSetTopBarActions = { isEditing, onSave, onEdit, canEdit ->
+                    if (currentUserId == targetUserId) {
+                        profileActions = {
+                            when {
+                                isEditing -> {
+                                    TextButton(onClick = onSave) { Text("Save") }
+                                }
+                                canEdit -> {
+                                    IconButton(onClick = onEdit) {
+                                        Icon(Icons.Default.Edit, contentDescription = "Edit")
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        profileActions = { }
+                    }
+                },
+                onAccountDeleted = onAccountDeleted
             )
         }
     }

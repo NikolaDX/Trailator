@@ -48,4 +48,29 @@ class FirebaseUserService {
             Result.failure(e)
         }
     }
+
+    suspend fun deleteUserData(userId: String): Result<Unit> {
+        return try {
+            val trailObjects = db.collection("trail_objects")
+                .whereEqualTo("authorId", userId)
+                .get()
+                .await()
+
+            val batch = db.batch()
+            trailObjects.documents.forEach { doc ->
+                batch.delete(doc.reference)
+            }
+            batch.commit().await()
+
+            db.collection("users")
+                .document(userId)
+                .delete()
+                .await()
+
+            Log.d("Firestore", "User data deleted for UID: $userId")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

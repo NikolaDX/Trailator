@@ -64,7 +64,8 @@ fun MapsScreen(
     viewModel: MapViewModel = viewModel(),
     userId: String,
     onRequestNotificationPermission: () -> Unit,
-    onOpenSettings: () -> Unit
+    onOpenSettings: () -> Unit,
+    onNavigateToProfile: (userId: String) -> Unit
 ) {
     // State management
     val cameraPositionState = rememberCameraPositionState()
@@ -306,13 +307,16 @@ fun MapsScreen(
         ObjectDetailsBottomSheet(
             trailObject = obj,
             userId = userId,
-            userName = uiState.currentUserName,
             onDismiss = { viewModel.selectObject(null) },
             onRate = { rating -> viewModel.addRating(obj.id, userId, rating) },
             onComment = { text ->
-                viewModel.addComment(obj.id, userId, uiState.currentUserName, text)
+                viewModel.addComment(obj.id, userId, text)
             },
-            viewModel = viewModel
+            onDelete = { objectId ->
+                viewModel.deleteTrailObject(objectId, userId)
+            },
+            viewModel = viewModel,
+            onNavigateToProfile = onNavigateToProfile
         )
     }
 }

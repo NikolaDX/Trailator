@@ -1,10 +1,14 @@
 package com.nikoladx.trailator.ui.screens.home.maps.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.*
@@ -24,20 +28,54 @@ import java.util.*
 fun ObjectDetailsBottomSheet(
     trailObject: TrailObject,
     userId: String,
-    userName: String,
     onDismiss: () -> Unit,
     onRate: (Int) -> Unit,
     onComment: (String) -> Unit,
-    viewModel: MapViewModel
+    onDelete: (String) -> Unit,
+    viewModel: MapViewModel,
+    onNavigateToProfile: (userId: String) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var commentText by remember { mutableStateOf("") }
     var selectedRating by remember { mutableIntStateOf(trailObject.ratings[userId] ?: 0) }
     var showFullScreenImage by remember { mutableStateOf(false) }
     var selectedImageIndex by remember { mutableIntStateOf(0) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     val userImageUrl by viewModel
         .getUserImageUriFlow(userId)
         .collectAsState(initial = null)
+    val userName by viewModel
+        .getUserName(userId)
+        .collectAsState(initial = null)
+
+    val isAuthor = userId == trailObject.authorId
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete Object") },
+            text = { Text("Are you sure you want to delete this trail object? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDelete(trailObject.id)
+                        showDeleteDialog = false
+                        onDismiss()
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     if (showFullScreenImage && trailObject.photoUrls.isNotEmpty()) {
         FullScreenImageViewer(
@@ -59,12 +97,41 @@ fun ObjectDetailsBottomSheet(
         ) {
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = trailObject.title,
-                        style = MaterialTheme.typography.headlineLarge
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = trailObject.title,
+                            style = MaterialTheme.typography.headlineLarge,
+                            modifier = Modifier.weight(1f)
+                        )
 
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (isAuthor) {
+                            IconButton(
+                                onClick = { showDeleteDialog = true }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Delete,
+                                    contentDescription = "Delete object",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable {
+                                onNavigateToProfile(trailObject.authorId)
+                                onDismiss()
+                            }
+                            .padding(vertical = 4.dp, horizontal = 0.dp)
+                    ) {
                         AsyncImage(
                             model = userImageUrl,
                             contentDescription = "${userName}'s profile picture",
@@ -77,7 +144,7 @@ fun ObjectDetailsBottomSheet(
                         Spacer(modifier = Modifier.width(8.dp))
 
                         Text(
-                            text = trailObject.authorName,
+                            text = userName ?: "",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -91,9 +158,6 @@ fun ObjectDetailsBottomSheet(
                             labelColor = MaterialTheme.colorScheme.onPrimary
                         )
                     )
-
-
-
                 }
             }
 
@@ -261,6 +325,10 @@ fun ObjectDetailsBottomSheet(
 
             items(trailObject.comments) { comment ->
                 CommentItem(
+                    modifier = Modifier.clickable {
+                        onNavigateToProfile(comment.userId)
+                        onDismiss()
+                    },
                     comment = comment,
                     viewModel = viewModel
                 )

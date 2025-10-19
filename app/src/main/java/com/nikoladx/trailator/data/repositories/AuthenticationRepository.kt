@@ -7,4 +7,5 @@ interface AuthenticationRepository {
     suspend fun signIn(email: String, password: String): Result<User>
     fun signOut()
     fun getPersistedUserUid(): String?
+    suspend fun deleteAccount(userId: String): Result<Unit>
 }

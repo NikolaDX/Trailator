@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Ribbon -->
+    <path
+        android:fillColor="#6A1B9A"
+        android:pathData="M12,0 L36,0 L34,11 L24,9 L14,11z" />
+
+    <!-- Ribbon tails -->
+    <path
+        android:fillColor="#5A137F"
+        android:pathData="M12,11 L18,22 L14,44 L8,44 L12,11z" />
+    <path
+        android:fillColor="#5A137F"
+        android:pathData="M36,11 L30,22 L34,44 L40,44 L36,11z" />
+
+    <!-- Medal circle -->
+    <path
+        android:fillColor="#AB47BC"
+        android:pathData="M24,12 A12,12 0 1,1 23.999,12z" />
+
+    <!-- Inner circle for rim -->
+    <path
+        android:fillColor="#6A1B9A"
+        android:pathData="M24,14 A10,10 0 1,1 23.999,14z" />
+
+    <!-- Crown (stylized) -->
+    <path
+        android:fillColor="#FFF9C4"
+        android:pathData="M10,30 L14,20 L18,26 L24,18 L30,26 L34,20 L38,30z" />
+    <!-- Crown jewels -->
+    <path
+        android:fillColor="#6A1B9A"
+        android:pathData="M14,22 A1,1 0 1,1 13.999,22z M24,20 A1,1 0 1,1 23.999,20z M34,22 A1,1 0 1,1 33.999,22z" />
+</vector>

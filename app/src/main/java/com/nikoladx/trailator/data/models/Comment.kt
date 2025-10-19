@@ -5,7 +5,6 @@ import java.util.Date
 data class Comment(
     val id: String = "",
     val userId: String = "",
-    val userName: String = "",
     val text: String = "",
     val timestamp: Date? = null
 )

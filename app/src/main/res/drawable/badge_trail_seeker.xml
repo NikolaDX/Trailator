@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Ribbon -->
+    <path
+        android:fillColor="#2E7D32"
+        android:pathData="M12,0 L36,0 L34,11 L24,9 L14,11z" />
+
+    <!-- Ribbon tails -->
+    <path
+        android:fillColor="#25662A"
+        android:pathData="M12,11 L18,22 L14,44 L8,44 L12,11z" />
+    <path
+        android:fillColor="#25662A"
+        android:pathData="M36,11 L30,22 L34,44 L40,44 L36,11z" />
+
+    <!-- Medal circle -->
+    <path
+        android:fillColor="#66BB6A"
+        android:pathData="M24,12 A12,12 0 1,1 23.999,12z" />
+
+    <!-- Inner circle for rim -->
+    <path
+        android:fillColor="#2E7D32"
+        android:pathData="M24,14 A10,10 0 1,1 23.999,14z" />
+
+    <!-- Leaf symbol (stylized) -->
+    <path
+        android:fillColor="#E8F5E9"
+        android:pathData="M24,14 C30,12 34,18 28,24 C26,26 24,26 24,26 C24,26 22,26 20,24 C14,18 18,12 24,14z" />
+    <!-- Midvein -->
+    <path
+        android:fillColor="#2E7D32"
+        android:pathData="M24,16 L24,26" />
+</vector>

@@ -17,7 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.nikoladx.trailator.ui.screens.home.leaderboard.components.RankingHeader
 import com.nikoladx.trailator.ui.screens.home.leaderboard.components.RankingItem
-import com.nikoladx.trailator.ui.screens.home.viewmodels.RankingsViewModel
+import com.nikoladx.trailator.ui.screens.home.leaderboard.viewmodels.RankingsViewModel
 
 @Composable
 fun RankingsScreen(

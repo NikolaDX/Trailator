@@ -76,6 +76,11 @@ fun TrailatorNavHost(
                         navController.navigate(Screen.Login.route) {
                             popUpTo(Screen.Home.route) { inclusive = true }
                         }
+                    },
+                    onAccountDeleted = {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
+                        }
                     }
                 )
             }

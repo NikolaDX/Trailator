@@ -87,4 +87,28 @@ class AuthenticationRepositoryImpl(
     override fun getPersistedUserUid(): String? {
         return authService.getCurrentUserUid()
     }
+
+    override suspend fun deleteAccount(userId: String): Result<Unit> {
+        return try {
+            val deleteDataResult = userService.deleteUserData(userId)
+            if (deleteDataResult.isFailure) {
+                return Result.failure(
+                    deleteDataResult.exceptionOrNull()
+                        ?: Exception("Failed to delete user data")
+                )
+            }
+
+            val deleteAuthResult = authService.deleteCurrentUser()
+            if (deleteAuthResult.isFailure) {
+                return Result.failure(
+                    deleteAuthResult.exceptionOrNull()
+                        ?: Exception("Failed to delete authentication")
+                )
+            }
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

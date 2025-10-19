@@ -24,6 +24,7 @@ import com.nikoladx.trailator.ui.screens.home.maps.viewmodels.MapViewModel
 
 @Composable
 fun CommentItem(
+    modifier: Modifier,
     comment: Comment,
     viewModel: MapViewModel
 ) {
@@ -31,13 +32,17 @@ fun CommentItem(
         .getUserImageUriFlow(comment.userId)
         .collectAsState(initial = null)
 
+    val userName by viewModel
+        .getUserName(comment.userId)
+        .collectAsState(initial = null)
+
     Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        modifier = modifier.fillMaxWidth().padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
             model = userImageUrl,
-            contentDescription = "${comment.userName}'s profile picture",
+            contentDescription = "${userName}'s profile picture",
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape),
@@ -48,7 +53,7 @@ fun CommentItem(
 
         Column {
             Text(
-                text = comment.userName,
+                text = userName ?: "",
                 style = MaterialTheme.typography.titleLarge
             )
             Text(

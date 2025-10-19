@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Ribbon -->
+    <path
+        android:fillColor="#B36B00"
+        android:pathData="M12,0 L36,0 L34,11 L24,9 L14,11z" />
+
+    <!-- Ribbon tails -->
+    <path
+        android:fillColor="#A65F00"
+        android:pathData="M12,11 L18,22 L14,44 L8,44 L12,11z" />
+    <path
+        android:fillColor="#A65F00"
+        android:pathData="M36,11 L30,22 L34,44 L40,44 L36,11z" />
+
+    <!-- Medal circle -->
+    <path
+        android:fillColor="#C47A2A"
+        android:pathData="M24,12 A12,12 0 1,1 23.999,12z" />
+
+    <!-- Inner circle for rim -->
+    <path
+        android:fillColor="#9A5F1A"
+        android:pathData="M24,14 A10,10 0 1,1 23.999,14z" />
+
+    <!-- Star symbol -->
+    <path
+        android:fillColor="#FFF8E1"
+        android:pathData="M24,8 L27,17 L36,17 L29,22 L31,31 L24,26 L17,31 L19,22 L12,17 L21,17z"
+        android:translateY="6"/>
+</vector>
+

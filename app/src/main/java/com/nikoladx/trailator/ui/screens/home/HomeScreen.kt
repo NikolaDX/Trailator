@@ -28,7 +28,8 @@ import com.nikoladx.trailator.ui.navigation.HomeTab
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onSignOut: () -> Unit
+    onSignOut: () -> Unit,
+    onAccountDeleted: () -> Unit
 ) {
     val navController = rememberNavController()
 
@@ -47,6 +48,9 @@ fun HomeScreen(
         topBar = {
             TopAppBar(
                 title = { Text(topBarContent.title) },
+                navigationIcon = {
+                    topBarContent.navigationIcon?.invoke()
+                },
                 actions = {
                     topBarContent.actions?.invoke()
                     IconButton(onClick = onSignOut) {
@@ -93,8 +97,9 @@ fun HomeScreen(
             navController = navController,
             modifier = Modifier.padding(paddingValues),
             onUpdateTopBar = { newContent ->
-                topBarContent = newContent.copy(title = newContent.title)
-            }
+                topBarContent = newContent
+            },
+            onAccountDeleted = onAccountDeleted
         )
     }
 }

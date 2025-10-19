@@ -32,7 +32,6 @@ interface TrailObjectRepository {
     suspend fun addComment(
         objectId: String,
         userId: String,
-        userName: String,
         text: String
     ): Result<Unit>
 

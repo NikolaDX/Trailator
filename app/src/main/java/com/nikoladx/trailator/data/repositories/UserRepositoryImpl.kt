@@ -99,4 +99,33 @@ class UserRepositoryImpl(
             .map { snapshot ->
                 snapshot.getString("imageUri")
             }
+
+    override fun getUserName(userId: String): Flow<String?> =
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(userId)
+            .snapshots()
+            .map { snapshot ->
+                snapshot.getString("name")
+            }
+
+    override suspend fun deleteAccount(userId: String): Result<Unit> {
+        return try {
+            val trailObjects = firestore.collection("trail_objects")
+                .whereEqualTo("authorId", userId)
+                .get()
+                .await()
+
+            trailObjects.documents.forEach { doc ->
+                doc.reference.delete().await()
+            }
+
+            usersCollection.document(userId).delete().await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+
+    }
 }

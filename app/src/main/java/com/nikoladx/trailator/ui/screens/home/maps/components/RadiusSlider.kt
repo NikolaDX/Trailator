@@ -63,13 +63,13 @@ fun RadiusSlider(
         if (animatedRadius > 0) {
             Text(
                 text = "Radius: ${animatedRadius.toInt()} m",
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
         } else {
             Text(
                 text = "Radius Search Off",
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
         }
