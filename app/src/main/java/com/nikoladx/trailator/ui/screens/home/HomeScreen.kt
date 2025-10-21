@@ -22,8 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.nikoladx.trailator.data.models.HomeTopBarContent
-import com.nikoladx.trailator.ui.navigation.HomeNavHost
-import com.nikoladx.trailator.ui.navigation.HomeTab
+import com.nikoladx.trailator.ui.screens.home.navigation.HomeNavHost
+import com.nikoladx.trailator.ui.screens.home.navigation.HomeTab
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -18,7 +18,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -35,15 +37,22 @@ fun LoginScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(uiState.isLoginSuccessful) {
-        if (uiState.isLoginSuccessful) {
-            onLoginSuccess()
-        }
+        if (uiState.isLoginSuccessful) onLoginSuccess()
     }
 
     Column(
-        modifier = modifier.padding(32.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(32.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Text(
+            text = "Trailator 🏕️",
+            style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.primary
+        )
+
         Text(
             text = "Welcome Back",
             style = MaterialTheme.typography.headlineMedium
@@ -74,15 +83,13 @@ fun LoginScreen(
             enabled = !uiState.isLoading
         )
 
-        if (uiState.errorMessage != null) {
+        uiState.errorMessage?.let { error ->
             Text(
-                text = uiState.errorMessage!!,
+                text = error,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall
             )
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
 
         Button(
             onClick = viewModel::onSignInClick,
@@ -95,18 +102,20 @@ fun LoginScreen(
                     modifier = Modifier.height(24.dp)
                 )
             } else {
-                Text("Sign in")
+                Text("Sign In")
             }
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Don't have an account?")
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Don't have an account? ")
             Text(
-                "Sign up",
+                "Sign Up",
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clickable {
-                    onNavigateToRegister()
-                })
+                modifier = Modifier.clickable { onNavigateToRegister() }
+            )
         }
     }
 }

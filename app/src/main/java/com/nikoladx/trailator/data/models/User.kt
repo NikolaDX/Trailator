@@ -13,9 +13,9 @@ data class User(
     val rank: UserRank = UserRank.NOVICE,
     val achievedBadges: List<String> = emptyList(),
     val objectsAdded: Int = 0,
-    val objectsRated: Int = 0,
     val commentsPosted: Int = 0,
     val locationsVisited: Int = 0,
+    val visitedObjectIds: List<String> = emptyList(),
     @ServerTimestamp
     val memberSince: Date? = null,
     @ServerTimestamp
@@ -34,12 +34,12 @@ data class User(
     }
 }
 
-enum class UserRank(val displayName: String, val minPoints: Int) {
-    NOVICE("Novice", 0),
-    ENTHUSIAST("Enthusiast", 100),
-    TRAIL_SEEKER("Trail Seeker", 500),
-    ADVANCED_TREKKER("Advanced Trekker", 1000),
-    EXPERT_HIKER("Expert Hiker", 2000),
-    MASTER_EXPLORER("Master Explorer", 5000)
+enum class UserRank(val displayName: String) {
+    NOVICE("Novice"),
+    ENTHUSIAST("Enthusiast"),
+    TRAIL_SEEKER("Trail Seeker"),
+    ADVANCED_TREKKER("Advanced Trekker"),
+    EXPERT_HIKER("Expert Hiker"),
+    MASTER_EXPLORER("Master Explorer")
 }
 

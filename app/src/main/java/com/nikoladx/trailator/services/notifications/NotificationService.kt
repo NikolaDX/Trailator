@@ -22,8 +22,6 @@ class NotificationService(private val context: Context) {
         private const val CHANNEL_DESCRIPTION = "Notifikacije o objektima u blizini"
 
         const val NOTIFICATION_ID_NEARBY = 1001
-        const val NOTIFICATION_ID_NEW_COMMENT = 1002
-        const val NOTIFICATION_ID_NEW_RATING = 1003
 
         private const val MIN_NOTIFICATION_INTERVAL = 5 * 60 * 1000L // 5 minuta
     }
@@ -100,30 +98,6 @@ class NotificationService(private val context: Context) {
     }
 
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
-    fun showNewCommentNotification(objectTitle: String, userName: String) {
-        if (!hasNotificationPermission()) return
-
-        sendNotification(
-            notificationId = NOTIFICATION_ID_NEW_COMMENT,
-            title = "Novi komentar",
-            message = "$userName je komentarisao na $objectTitle",
-            priority = NotificationCompat.PRIORITY_DEFAULT
-        )
-    }
-
-    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
-    fun showNewRatingNotification(objectTitle: String, rating: Int) {
-        if (!hasNotificationPermission()) return
-
-        sendNotification(
-            notificationId = NOTIFICATION_ID_NEW_RATING,
-            title = "Nova ocena",
-            message = "$objectTitle je ocenjen sa $rating ⭐",
-            priority = NotificationCompat.PRIORITY_LOW
-        )
-    }
-
-    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     private fun sendNotification(
         notificationId: Int,
         title: String,
@@ -171,18 +145,5 @@ class NotificationService(private val context: Context) {
 
     fun resetNotifiedObjects() {
         notifiedObjects.clear()
-    }
-
-    fun resetObjectsOutsideRadius(currentObjects: List<TrailObject>) {
-        val currentIds = currentObjects.map { it.id }.toSet()
-        notifiedObjects.retainAll(currentIds)
-    }
-
-    fun cancelAllNotifications() {
-        notificationManager.cancelAll()
-    }
-
-    fun cancelNotification(notificationId: Int) {
-        notificationManager.cancel(notificationId)
     }
 }

@@ -32,8 +32,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.nikoladx.trailator.ui.screens.home.maps.viewmodels.MapViewModel
 import com.nikoladx.trailator.ui.screens.home.profile.components.EditFields
-import com.nikoladx.trailator.ui.screens.home.profile.components.ProfileBadges
 import com.nikoladx.trailator.ui.screens.home.profile.components.ProfileDetails
 import com.nikoladx.trailator.ui.screens.home.profile.components.ProfileHeader
 import com.nikoladx.trailator.ui.screens.home.profile.viewmodels.ProfileViewModel
@@ -45,7 +45,9 @@ fun ProfileScreen(
     loggedInUserId: String,
     targetUserId: String,
     onSetTopBarActions: (isEditing: Boolean, onSave: () -> Unit, onEdit: () -> Unit, canEdit: Boolean) -> Unit,
-    onAccountDeleted: () -> Unit
+    onAccountDeleted: () -> Unit,
+    mapViewModel: MapViewModel,
+    onNavigateToProfile: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val user = uiState.user
@@ -55,6 +57,8 @@ fun ProfileScreen(
     var name by remember { mutableStateOf(user.name) }
     var lastName by remember { mutableStateOf(user.lastName) }
     var localImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    val visitedTrails by viewModel.visitedTrails.collectAsState()
 
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
 
@@ -133,8 +137,30 @@ fun ProfileScreen(
                             onLastNameChange = { lastName = it }
                         )
                     } else {
-                        ProfileDetails(user)
-                        ProfileBadges(user)
+                        ProfileDetails(
+                            user = uiState.user,
+                            visitedTrails = visitedTrails,
+                            mapViewModel = mapViewModel,
+                            onNavigateToProfile = onNavigateToProfile
+                        )
+                    }
+
+                    if (canEdit && !isEditing) {
+                        Column(
+                            modifier = Modifier
+                                .padding(16.dp)
+                        ) {
+                            TextButton(
+                                onClick = { showDeleteAccountDialog = true },
+                                colors = ButtonDefaults.textButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.error
+                                )
+                            ) {
+                                Icon(Icons.Filled.Delete, contentDescription = null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("Delete Account")
+                            }
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -172,26 +198,5 @@ fun ProfileScreen(
                 Text(uiState.error!!)
             }
         }
-
-        if (canEdit && !isEditing) {
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp)
-            ) {
-                TextButton(
-                    onClick = { showDeleteAccountDialog = true },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Icon(Icons.Filled.Delete, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Delete Account")
-                }
-            }
-        }
     }
-
-
 }

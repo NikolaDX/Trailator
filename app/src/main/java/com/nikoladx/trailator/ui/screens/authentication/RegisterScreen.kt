@@ -1,15 +1,16 @@
 package com.nikoladx.trailator.ui.screens.authentication
 
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -20,11 +21,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.nikoladx.trailator.ui.screens.authentication.viewmodels.RegisterViewModel
 
 @Composable
@@ -38,30 +44,25 @@ fun RegisterScreen(
     val pickMedia = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia()
     ) { uri ->
-        if (uri != null) {
-            Log.d("PhotoPicker", "Selected URI: $uri")
-            viewModel.onImageSelected(uri)
-        } else {
-            Log.d("PhotoPicker", "No media selected")
-        }
+        if (uri != null) viewModel.onImageSelected(uri)
     }
 
     LaunchedEffect(uiState.isRegistrationSuccessful) {
-        if (uiState.isRegistrationSuccessful) {
-            onRegistrationSuccess()
-        }
+        if (uiState.isRegistrationSuccessful) onRegistrationSuccess()
     }
 
     Column(
-        modifier = modifier.padding(32.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(32.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Create an account",
-            style = MaterialTheme.typography.headlineMedium
+            text = "Create Your Account",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.SemiBold
         )
-
-        Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
             value = uiState.email,
@@ -89,8 +90,8 @@ fun RegisterScreen(
         OutlinedTextField(
             value = uiState.name,
             onValueChange = viewModel::onNameChange,
-            label = { Text("Name") },
-            placeholder = { Text("Enter your name") },
+            label = { Text("First Name") },
+            placeholder = { Text("Enter your first name") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
             enabled = !uiState.isLoading
@@ -99,12 +100,25 @@ fun RegisterScreen(
         OutlinedTextField(
             value = uiState.lastName,
             onValueChange = viewModel::onLastNameChange,
-            label = { Text("Last name") },
+            label = { Text("Last Name") },
             placeholder = { Text("Enter your last name") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
             enabled = !uiState.isLoading
         )
+
+        uiState.imageUri?.let { uri ->
+            AsyncImage(
+                model = uri,
+                contentDescription = "Selected Profile Image",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .padding(4.dp)
+            )
+        }
 
         Button(
             onClick = {
@@ -115,20 +129,16 @@ fun RegisterScreen(
             modifier = Modifier.fillMaxWidth(),
             enabled = !uiState.isLoading
         ) {
-            Text(
-                if (uiState.imageUri != null) "Image selected" else "Pick an image"
-            )
+            Text(if (uiState.imageUri != null) "Image Selected" else "Pick Profile Image")
         }
 
-        if (uiState.errorMessage != null) {
+        uiState.errorMessage?.let { error ->
             Text(
-                text = uiState.errorMessage!!,
+                text = error,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodySmall
             )
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
 
         Button(
             onClick = viewModel::onSignUpClick,
@@ -136,9 +146,12 @@ fun RegisterScreen(
             enabled = !uiState.isLoading
         ) {
             if (uiState.isLoading) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.height(24.dp)
+                )
             } else {
-                Text("Sign up")
+                Text("Sign Up")
             }
         }
     }

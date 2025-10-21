@@ -10,7 +10,6 @@ import com.nikoladx.trailator.data.models.TrailDifficulty
 import com.nikoladx.trailator.data.models.TrailObject
 import com.nikoladx.trailator.data.models.TrailObjectFilter
 import com.nikoladx.trailator.data.models.TrailObjectType
-import com.nikoladx.trailator.data.models.UserRank
 import com.nikoladx.trailator.data.models.WaterQuality
 import com.nikoladx.trailator.services.cloudinary.CloudinaryUploader
 import kotlinx.coroutines.flow.Flow
@@ -145,6 +144,33 @@ class TrailObjectRepositoryImpl(
             emit(objects)
         }
 
+    override suspend fun getTrailObjectById(objectId: String): Result<TrailObject?> {
+        return try {
+            val snapshot = objectsCollection.document(objectId).get().await()
+            if (snapshot.exists()) {
+                val trailObject = snapshot.toObject(TrailObject::class.java)
+                Result.success(trailObject)
+            } else {
+                Result.success(null)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getTrailObjectsByIds(ids: List<String>): Result<List<TrailObject>> {
+        return try {
+            val snapshot = firestore.collection("trail_objects")
+                .whereIn("id", ids)
+                .get()
+                .await()
+            val objects = snapshot.documents.mapNotNull { it.toObject(TrailObject::class.java) }
+            Result.success(objects)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
         val R = 6371e3
         val latRad1 = Math.toRadians(lat1)
@@ -210,7 +236,7 @@ class TrailObjectRepositoryImpl(
                 val snapshot = transaction.get(objectRef)
                 val comments =
                     (snapshot.get("comments") as? List<*>)?.mapNotNull { it as? Map<*, *> }
-                        ?.mapNotNull { map ->
+                        ?.map { map ->
                             Comment(
                                 id = map["id"] as? String ?: "",
                                 userId = map["userId"] as? String ?: "",
@@ -236,7 +262,7 @@ class TrailObjectRepositoryImpl(
         }
     }
 
-    private suspend fun awardPoints(userId: String, action: PointAction) {
+    override suspend fun awardPoints(userId: String, action: PointAction) {
         val userRef = usersCollection.document(userId)
 
         firestore.runTransaction { transaction ->
@@ -255,12 +281,9 @@ class TrailObjectRepositoryImpl(
                 else -> {}
             }
 
-            val (rank, badges) = updateBadgesAndRank(
-                points,
-                objectsAdded,
-                commentsPosted,
-                locationsVisited
-            )
+            val newRank = getRankBadge(points)
+            val currentBadges = snapshot.get("achievedBadges") as? List<String> ?: emptyList()
+            val newBadges = if (newRank !in currentBadges) currentBadges + newRank else currentBadges
 
             transaction.update(
                 userRef,
@@ -269,43 +292,52 @@ class TrailObjectRepositoryImpl(
                     "objectsAdded" to objectsAdded,
                     "commentsPosted" to commentsPosted,
                     "locationsVisited" to locationsVisited,
-                    "rank" to rank.name,
-                    "achievedBadges" to badges
+                    "rank" to newRank,
+                    "achievedBadges" to newBadges
                 )
             )
         }.await()
     }
 
-    private fun updateBadgesAndRank(
-        points: Long,
-        objectsAdded: Long,
-        commentsPosted: Long,
-        locationsVisited: Long
-    ): Pair<UserRank, List<String>> {
+    override suspend fun awardVisitPoints(userId: String, objectId: String) {
+        val userRef = usersCollection.document(userId)
 
-        val badges = mutableListOf<String>()
+        firestore.runTransaction { transaction ->
+            val snapshot = transaction.get(userRef)
+            val points = snapshot.getLong("points") ?: 0L
+            val locationsVisited = snapshot.getLong("locationsVisited") ?: 0L
+            val visitedIds = snapshot.get("visitedObjectIds") as? List<String> ?: emptyList()
 
-        if (objectsAdded >= 1) badges.add("Trail Starter")
-        if (objectsAdded >= 5) badges.add("Trail Mapper")
-        if (objectsAdded >= 20) badges.add("Pathfinder")
+            if (objectId !in visitedIds) {
+                val newVisitedIds = visitedIds + objectId
+                val newLocationsVisited = locationsVisited + 1
+                val newPoints = points + PointAction.VISIT_LOCATION.points
 
-        if (commentsPosted >= 10) badges.add("Community Voice")
-        if (commentsPosted >= 50) badges.add("Trail Mentor")
+                val newRank = getRankBadge(points)
 
-        if (locationsVisited >= 10) badges.add("Explorer")
-        if (locationsVisited >= 50) badges.add("Adventurer")
-        if (locationsVisited >= 100) badges.add("Legendary Wanderer")
+                transaction.update(
+                    userRef,
+                    mapOf(
+                        "points" to newPoints,
+                        "locationsVisited" to newLocationsVisited,
+                        "visitedObjectIds" to newVisitedIds,
+                        "rank" to newRank,
+                        "achievedBadges" to listOf(newRank)
+                    )
+                )
+            }
+        }.await()
+    }
 
-        val rank = when {
-            points >= 5000 -> UserRank.MASTER_EXPLORER
-            points >= 2000 -> UserRank.EXPERT_HIKER
-            points >= 1000 -> UserRank.ADVANCED_TREKKER
-            points >= 500 -> UserRank.TRAIL_SEEKER
-            points >= 100 -> UserRank.ENTHUSIAST
-            else -> UserRank.NOVICE
+    private fun getRankBadge(points: Long): String {
+        return when {
+            points >= 5000 -> "MASTER_EXPLORER"
+            points >= 2000 -> "EXPERT_HIKER"
+            points >= 1000 -> "ADVANCED_TREKKER"
+            points >= 500 -> "TRAIL_SEEKER"
+            points >= 100 -> "ENTHUSIAST"
+            else -> "NOVICE"
         }
-
-        return Pair(rank, badges.distinct())
     }
 
     override suspend fun deleteTrailObject(

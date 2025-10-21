@@ -7,10 +7,10 @@ import com.nikoladx.trailator.BuildConfig
 object CloudinaryConfig {
     private var isInitialized = false
 
-    private val CLOUD_NAME = BuildConfig.CLOUDINARY_CLOUD_NAME
-    private val API_KEY = BuildConfig.CLOUDINARY_API_KEY
-    private val API_SECRET = BuildConfig.CLOUDINARY_API_SECRET
-    val UPLOAD_PRESET = BuildConfig.CLOUDINARY_UPLOAD_PRESET
+    private const val CLOUD_NAME = BuildConfig.CLOUDINARY_CLOUD_NAME
+    private const val API_KEY = BuildConfig.CLOUDINARY_API_KEY
+    private const val API_SECRET = BuildConfig.CLOUDINARY_API_SECRET
+    const val UPLOAD_PRESET = BuildConfig.CLOUDINARY_UPLOAD_PRESET
 
     fun initialize(context: Context) {
         if (!isInitialized) {
@@ -25,6 +25,4 @@ object CloudinaryConfig {
             isInitialized = true
         }
     }
-
-    fun getCloudName(): String = CLOUD_NAME
 }

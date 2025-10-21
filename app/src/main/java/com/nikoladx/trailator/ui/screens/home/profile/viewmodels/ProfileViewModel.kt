@@ -1,9 +1,12 @@
 package com.nikoladx.trailator.ui.screens.home.profile.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nikoladx.trailator.data.models.TrailObject
 import com.nikoladx.trailator.data.models.User
 import com.nikoladx.trailator.data.repositories.AuthenticationRepository
+import com.nikoladx.trailator.data.repositories.TrailObjectRepository
 import com.nikoladx.trailator.data.repositories.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,11 +24,15 @@ data class ProfileUiState(
 
 class ProfileViewModel(
     private val userRepository: UserRepository,
+    private val trailRepository: TrailObjectRepository,
     private val authRepository: AuthenticationRepository,
     private val userId: String
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
+
+    private val _visitedTrails = MutableStateFlow<List<TrailObject>>(emptyList())
+    val visitedTrails: StateFlow<List<TrailObject>> = _visitedTrails.asStateFlow()
 
     init {
         loadUserProfile()
@@ -36,8 +43,23 @@ class ProfileViewModel(
             _uiState.update { it.copy(isLoading = true, error = null) }
             userRepository.getUser(userId).onSuccess { user ->
                 _uiState.update { it.copy(user = user, isLoading = false) }
+                loadVisitedTrails(user)
             }.onFailure { e ->
                 _uiState.update { it.copy(isLoading = false, error = "Failed to load profile: ${e.message}") }
+            }
+        }
+    }
+
+    fun loadVisitedTrails(user: User) {
+        viewModelScope.launch {
+            Log.d("TRAILS", user.visitedObjectIds.toString())
+
+            if (user.visitedObjectIds.isNotEmpty()) {
+                trailRepository.getTrailObjectsByIds(user.visitedObjectIds).onSuccess { trails ->
+                    _visitedTrails.value = trails
+                }.onFailure {
+                    Log.e("TRAILS", "Failed to load visited trails", it)
+                }
             }
         }
     }

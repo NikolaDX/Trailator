@@ -50,10 +50,4 @@ data class TrailObject(
         return if (ratings.isEmpty()) 0.0
         else ratings.values.average()
     }
-
-    fun getTotalInteractions(): Int {
-        return ratings.size + comments.size
-    }
-
-
 }

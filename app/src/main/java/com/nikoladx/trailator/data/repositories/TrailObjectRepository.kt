@@ -26,6 +26,8 @@ interface TrailObjectRepository {
     suspend fun getAllTrailObjects(): Flow<List<TrailObject>>
 
     suspend fun getFilteredTrailObjects(filter: TrailObjectFilter): Flow<List<TrailObject>>
+    suspend fun getTrailObjectById(objectId: String): Result<TrailObject?>
+    suspend fun getTrailObjectsByIds(ids: List<String>): Result<List<TrailObject>>
 
     suspend fun addRating(objectId: String, userId: String, rating: Int): Result<Unit>
 
@@ -36,4 +38,6 @@ interface TrailObjectRepository {
     ): Result<Unit>
 
     suspend fun deleteTrailObject(objectId: String, userId: String): Result<Unit>
+    suspend fun awardPoints(userId: String, action: PointAction)
+    suspend fun awardVisitPoints(userId: String, objectId: String)
 }

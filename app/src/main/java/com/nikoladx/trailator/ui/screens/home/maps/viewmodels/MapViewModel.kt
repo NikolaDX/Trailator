@@ -44,7 +44,7 @@ data class MapUiState(
     val currentUserName: String = ""
 )
 
-private const val NEARBY_RADIUS_METERS = 3000.0
+private const val NEARBY_RADIUS_METERS = 1000.0
 
 class MapViewModel(
     val repository: TrailObjectRepository,
@@ -181,7 +181,7 @@ class MapViewModel(
         }
     }
 
-    private fun loadTrailObjects() {
+    fun loadTrailObjects() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
@@ -203,6 +203,25 @@ class MapViewModel(
                         )
                     }
                 }
+        }
+    }
+
+    fun loadTrailObjectById(objectId: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+
+            val result = repository.getTrailObjectById(objectId)
+            result.onSuccess { trailObject ->
+                _uiState.update {
+                    it.copy(
+                        selectedObject = trailObject,
+                        isLoading = false,
+                        error = if (trailObject == null) "Object not found" else null
+                    )
+                }
+            }.onFailure { exception ->
+                _uiState.update { it.copy(isLoading = false, error = exception.message) }
+            }
         }
     }
 
@@ -250,6 +269,7 @@ class MapViewModel(
 
     fun hideAddObjectDialog() {
         _uiState.update { it.copy(showAddObjectDialog = false) }
+        loadTrailObjects()
     }
 
     fun addRating(objectId: String, userId: String, rating: Int) {
@@ -320,10 +340,18 @@ class MapViewModel(
         viewModelScope.launch {
             repository.getFilteredTrailObjects(filter)
                 .collect { nearbyObjects ->
+                    val userId = authService.getCurrentUserUid() ?: return@collect
+
                     if (nearbyObjects.isNotEmpty()) {
                         notificationService.showNearbyObjectsNotification(nearbyObjects)
                     } else {
                         notificationService.resetNotifiedObjects()
+                    }
+
+                    nearbyObjects.forEach { obj ->
+                        viewModelScope.launch {
+                            repository.awardVisitPoints(userId, obj.id)
+                        }
                     }
 
                     return@collect

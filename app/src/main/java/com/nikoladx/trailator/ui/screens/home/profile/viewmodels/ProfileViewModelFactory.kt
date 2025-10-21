@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.nikoladx.trailator.data.repositories.AuthenticationRepositoryImpl
+import com.nikoladx.trailator.data.repositories.TrailObjectRepositoryImpl
 import com.nikoladx.trailator.data.repositories.UserRepositoryImpl
 import com.nikoladx.trailator.services.firebase.FirebaseAuthService
 import com.nikoladx.trailator.services.firebase.FirebaseUserService
@@ -19,7 +20,8 @@ class ProfileViewModelFactory(
             val authService = FirebaseAuthService()
             val userService = FirebaseUserService()
             val authRepository = AuthenticationRepositoryImpl(authService, userService)
-            return ProfileViewModel(userRepository, authRepository, userId) as T
+            val trailRepository = TrailObjectRepositoryImpl(application.applicationContext)
+            return ProfileViewModel(userRepository, trailRepository, authRepository, userId) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }

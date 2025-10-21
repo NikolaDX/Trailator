@@ -22,7 +22,7 @@ class MainActivity : ComponentActivity() {
         val userService = FirebaseUserService()
         val authRepository = AuthenticationRepositoryImpl(authService, userService)
 
-        val registerViewModelFactory = RegisterViewModelFactory(authRepository)
+        val registerViewModelFactory = RegisterViewModelFactory(authRepository, application)
         val loginViewModelFactory = LoginViewModelFactory(authRepository)
 
         setContent {

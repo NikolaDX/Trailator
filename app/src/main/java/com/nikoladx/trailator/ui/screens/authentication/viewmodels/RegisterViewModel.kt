@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nikoladx.trailator.data.repositories.AuthenticationRepository
+import com.nikoladx.trailator.services.cloudinary.CloudinaryUploader
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,9 +23,9 @@ data class RegisterUiState(
 )
 
 class RegisterViewModel(
-    private val authRepository: AuthenticationRepository
+    private val authRepository: AuthenticationRepository,
+    private val cloudinaryUploader: CloudinaryUploader
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow(RegisterUiState())
     val uiState: StateFlow<RegisterUiState> = _uiState.asStateFlow()
 
@@ -83,12 +84,18 @@ class RegisterViewModel(
 
             val imageUriString = currentState.imageUri?.toString() ?: ""
 
+            val uploadedImageUrl = imageUriString.let { uri ->
+                if (!uri.startsWith("http")) {
+                    cloudinaryUploader.uploadImage(uri)
+                } else uri
+            }
+
             val result = authRepository.signUp(
                 email = currentState.email,
                 password = currentState.password,
                 name = currentState.name,
                 lastName = currentState.lastName,
-                imageUri = imageUriString
+                imageUri = uploadedImageUrl
             )
 
             result.fold(

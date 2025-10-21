@@ -107,6 +107,7 @@ fun MapsScreen(
         if (!viewModel.hasNotificationPermission()) {
             showPermissionDialog = true
         }
+        viewModel.loadTrailObjects()
     }
 
     LaunchedEffect(mapLoaded, uiState.location) {
@@ -162,8 +163,8 @@ fun MapsScreen(
                             center = position,
                             radius = animatedRadius.toDouble(),
                             strokeWidth = 2f,
-                            strokeColor = MaterialTheme.colorScheme.primary,
-                            fillColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                            strokeColor = MaterialTheme.colorScheme.error,
+                            fillColor = MaterialTheme.colorScheme.error.copy(alpha = 0.1f)
                         )
                     }
 
