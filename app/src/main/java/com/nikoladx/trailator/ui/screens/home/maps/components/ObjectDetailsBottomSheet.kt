@@ -42,10 +42,10 @@ fun ObjectDetailsBottomSheet(
     var selectedImageIndex by remember { mutableIntStateOf(0) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     val userImageUrl by viewModel
-        .getUserImageUriFlow(userId)
+        .getUserImageUriFlow(trailObject.authorId)
         .collectAsState(initial = null)
     val userName by viewModel
-        .getUserName(userId)
+        .getUserName(trailObject.authorId)
         .collectAsState(initial = null)
 
     val isAuthor = userId == trailObject.authorId

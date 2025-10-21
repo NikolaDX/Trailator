@@ -63,7 +63,7 @@ fun ProfileScreen(
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        viewModel.refreshUserProfile()
+        viewModel.loadUserProfile()
     }
 
     LaunchedEffect(isEditing, canEdit) {

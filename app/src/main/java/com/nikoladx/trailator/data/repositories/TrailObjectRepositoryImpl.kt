@@ -314,6 +314,8 @@ class TrailObjectRepositoryImpl(
                 val newPoints = points + PointAction.VISIT_LOCATION.points
 
                 val newRank = getRankBadge(points)
+                val currentBadges = snapshot.get("achievedBadges") as? List<String> ?: emptyList()
+                val newBadges = if (newRank !in currentBadges) currentBadges + newRank else currentBadges
 
                 transaction.update(
                     userRef,
@@ -322,7 +324,7 @@ class TrailObjectRepositoryImpl(
                         "locationsVisited" to newLocationsVisited,
                         "visitedObjectIds" to newVisitedIds,
                         "rank" to newRank,
-                        "achievedBadges" to listOf(newRank)
+                        "achievedBadges" to newBadges
                     )
                 )
             }

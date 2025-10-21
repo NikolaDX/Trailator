@@ -38,7 +38,7 @@ class ProfileViewModel(
         loadUserProfile()
     }
 
-    private fun loadUserProfile() {
+    fun loadUserProfile() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             userRepository.getUser(userId).onSuccess { user ->
